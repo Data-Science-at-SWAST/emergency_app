@@ -1,5 +1,5 @@
-python -m pip install streamlit
-python -m pip install  PIL
-python -m pip install  pandas
-python -m pip install  plotly
-python -m pip install statsmodels
+streamlit==0.81.0
+PIL
+pandas
+plotly
+statsmodels
