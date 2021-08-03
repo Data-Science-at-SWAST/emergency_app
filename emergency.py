@@ -15,7 +15,7 @@ warnings.filterwarnings('ignore')
 
 def download_link(object_to_download):
     
-    csv = df.to_csv(index=False)
+    csv = object_to_download.to_csv(index=False)
     b64 = base64.b64encode(csv.encode()).decode()
     href = f'<a href="data:file/csv;base64,{b64}">Download csv file</a>'
 
