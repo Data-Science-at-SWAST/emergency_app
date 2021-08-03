@@ -277,7 +277,7 @@ if r == True:
                     st.plotly_chart(fig, use_container_width=True)
     
                     if st.button('Save this forecast'):
-                        download_link(df, 'forecastoutput.csv', 'Click here to download data!')
+                        download_link(result, 'forecastoutput.csv', 'Click here to download data!')
                         
                     with st.spinner('Forecast Model Built!'):
                         time.sleep(1)
