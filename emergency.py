@@ -13,14 +13,11 @@ warnings.filterwarnings('ignore')
 
 ############################# Function require to download information later on
 
-def download_link(object_to_download, download_filename, download_link_text):
-
-    if isinstance(object_to_download,pd.DataFrame):
-        object_to_download = object_to_download.to_csv(index=False)
-
-    b64 = base64.b64encode(object_to_download.encode()).decode()
-
-    return f'<a href="data:file/txt;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
+def download_link(object_to_download):
+    
+    csv = df.to_csv(index=False)
+    b64 = base64.b64encode(csv.encode()).decode()
+    href = f'<a href="data:file/csv;base64,{b64}">Download csv file</a>'
 
 ############################# Initial set up of sidebar and upload
 
@@ -277,7 +274,7 @@ if r == True:
                     st.plotly_chart(fig, use_container_width=True)
     
                     if st.button('Save this forecast'):
-                        download_link(result, 'forecastoutput.csv', 'Click here to download data!')
+                        download_link(result)
                         
                     with st.spinner('Forecast Model Built!'):
                         time.sleep(1)
