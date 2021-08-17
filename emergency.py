@@ -71,12 +71,12 @@ if r == True:
     else:
         False
         
-    if pi == '90%':
-        pi = 0.1
-    elif pi == '80%':
-        pi = 0.2
-    elif pi == '60%':
-        pi = 0.4
+if pi == '90%':
+    pi = 0.1
+elif pi == '80%':
+    pi = 0.2
+elif pi == '60%':
+    pi = 0.4
     
 
     ############################# beginning of the data input section   
@@ -272,9 +272,6 @@ if r == True:
                         )
                     )
                     st.plotly_chart(fig, use_container_width=True)
-    
-                    if st.button('Save this forecast'):
-                        download_link(result)
                         
                     with st.spinner('Forecast Model Built!'):
                         time.sleep(1)
