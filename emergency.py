@@ -505,8 +505,8 @@ with st.beta_expander("Forecast Study & Emergency App Development"):
     col4.markdown("**Capacity Planning Analyst - SWAST**  \n Study collaborator  \n ""mailto:lucy.collins@swast.nhs.uk")
     
     col5.header("**Alison Harper**")    
-    col5.image(Image.open('images/npic.png'), width = 230)
-    col5.markdown("  \n Postdoctoral Research Associate  \n ""mailto:a.l.harper@exeter.ac.uk")
+    col5.image(Image.open('images/Alison-Harper.jpg'), width = 230)
+    col5.markdown("**Postdoctoral Research Associate**  \n Study collaborator   \n ""mailto:a.l.harper@exeter.ac.uk")
     
 
     
