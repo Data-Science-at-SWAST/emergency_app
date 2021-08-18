@@ -43,6 +43,8 @@ ram = st.sidebar.selectbox('Choose forecast model',['ensemble','individualised']
 st.sidebar.text(''' ''')
 pi = st.sidebar.selectbox('Pick Prediction Intervals',['90%','80%','60%'], help ='With a 90% prediction interval, the graph will plot an upper and lower line to represent where 90% of the data will fall')
 st.sidebar.text(''' ''')
+decom = st.sidebar.selectbox("Include the Seasonal Decomposition", ['No', 'Yes'], help ='Seasonal Decomposition will break down the dataset into its individual seasonal components, by default this is set to no')
+st.sidebar.text(''' ''')
 crossval = st.sidebar.selectbox("Include the Cross Validation results", ['No', 'Yes'], help ='Cross validation will show you the forecasts performance. However, it can be a lengthly process (typically 2-3 minutes), so if you are already happy with your model you may choose to choose No to avoid running it.')
 st.sidebar.text(''' ''')
 r = st.sidebar.button('Run Forecast Model')
@@ -282,54 +284,60 @@ if r == True:
             st.markdown('https://www.oxfordreference.com/view/10.1093/acref/9780199541454.001.0001/acref-9780199541454')
             
             if uploaded_file is not None:
-                st.markdown('''Seasonal decomposition aims to break down the individualised components that made up the above forecasts. For more information view the statsmodels seasonal decomposition page.''')
+                
+                
+                    if decom == 'No':
+                        st.markdown("Change Seaonal Decomposition to Yes to see results")
+                    else:
+                                
+                        st.markdown('''Seasonal decomposition aims to break down the individualised components that made up the above forecasts. For more information view the statsmodels seasonal decomposition page.''')
         
         
-                sd = df
-                sd.reset_index(drop = False, inplace = True)
-                sd['ds'] = pd.to_datetime(sd['ds'])
-                sd = sd.set_index('ds')
-                sd.index.freq = 'D'
+                        sd = df
+                        sd.reset_index(drop = False, inplace = True)
+                        sd['ds'] = pd.to_datetime(sd['ds'])
+                        sd = sd.set_index('ds')
+                        sd.index.freq = 'D'
                 
-                sdresult = seasonal_decompose(sd[target], model='additive')
-                
-                
-                it = ['resid','seasonal','trend']
+                        sdresult = seasonal_decompose(sd[target], model='additive')
                 
                 
-                fig = make_subplots(
-                    rows=3, cols=1,
-                    shared_xaxes=True,
-                    vertical_spacing=0.06,
-                    specs=[[{"type": "scatter"}],[{"type": "scatter"}],[{"type": "scatter"}]] #need to enumerate to create the necessary row plots
+                        it = ['resid','seasonal','trend']
+                
+                
+                        fig = make_subplots(
+                            rows=3, cols=1,
+                            shared_xaxes=True,
+                            vertical_spacing=0.06,
+                            specs=[[{"type": "scatter"}],[{"type": "scatter"}],[{"type": "scatter"}]] #need to enumerate to create the necessary row plots
                       
-                )
+                            )
                 
                 
-                fig.add_trace(go.Scatter(x=sdresult.resid.index, y=sdresult.resid, mode="lines", name='residual'),row=1, col=1)
-                fig.add_trace(go.Scatter(x=sdresult.seasonal.index, y=sdresult.seasonal, mode="lines", name='seasonal'),row=2, col=1)
-                fig.add_trace(go.Scatter(x=sdresult.trend.index, y=sdresult.trend, mode="lines", name='trend'),row=3, col=1) 
+                        fig.add_trace(go.Scatter(x=sdresult.resid.index, y=sdresult.resid, mode="lines", name='residual'),row=1, col=1)
+                        fig.add_trace(go.Scatter(x=sdresult.seasonal.index, y=sdresult.seasonal, mode="lines", name='seasonal'),row=2, col=1)
+                        fig.add_trace(go.Scatter(x=sdresult.trend.index, y=sdresult.trend, mode="lines", name='trend'),row=3, col=1) 
                     
-                fig.update_xaxes(color='#F2F2F2', gridcolor = 'rgba(255,255,255,0.2)')
-                fig.update_yaxes(color='#F2F2F2', gridcolor = 'rgba(255,255,255,0.2)')
+                        fig.update_xaxes(color='#F2F2F2', gridcolor = 'rgba(255,255,255,0.2)')
+                        fig.update_yaxes(color='#F2F2F2', gridcolor = 'rgba(255,255,255,0.2)')
                 
                 
-                fig.update_layout(
-                    height=1000,
-                    showlegend=True,
-                    title_text="Series Decomposition",
-                    paper_bgcolor='rgba(34,42,55,1)',
-                    title_font_color='rgba(255,255,255,1)',
-                    modebar_color='rgba(255,255,255,1)',
-                    plot_bgcolor='rgba(47,58,75,0.5)',
-                    legend_font_color='rgba(255,255,255,1)',
-                    colorway=['#E29D89','#46AFF6','#096F64','#3993BA','#02DAC5','#FC5523','#CF6679'],
+                        fig.update_layout(
+                            height=1000,
+                            showlegend=True,
+                            title_text="Series Decomposition",
+                            paper_bgcolor='rgba(34,42,55,1)',
+                            title_font_color='rgba(255,255,255,1)',
+                             modebar_color='rgba(255,255,255,1)',
+                             plot_bgcolor='rgba(47,58,75,0.5)',
+                             legend_font_color='rgba(255,255,255,1)',
+                             colorway=['#E29D89','#46AFF6','#096F64','#3993BA','#02DAC5','#FC5523','#CF6679'],
                    
-                    )
-                st.plotly_chart(fig, use_container_width=True)
+                            )
+                        st.plotly_chart(fig, use_container_width=True)
               
-                with st.spinner('Decomposition Built!'):
-                    time.sleep(1)    
+                        with st.spinner('Decomposition Built!'):
+                            time.sleep(1)    
     
     ############################# Beginning of the Cross Validation Section
     
