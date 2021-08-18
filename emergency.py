@@ -2,7 +2,6 @@ import streamlit as st
 from PIL import Image
 import time
 import pandas as pd
-import base64
 from modules import (ensemble, utility)
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -501,21 +500,10 @@ with st.beta_expander("Forecast Study & Emergency App Development"):
     col3.markdown("**Senior Modeller**  \n Study collaborator  \n ""mailto:m.allen@exeter.ac.uk")
     
     col4.header("**Lucy Collins**")    
-    col4.image(Image.open('images/npic.png'), width = 230)
+    col4.image(Image.open('images/Photo.JPG'), width = 230)
     col4.markdown("**Capacity Planning Analyst - SWAST**  \n Study collaborator  \n ""mailto:lucy.collins@swast.nhs.uk")
     
     col5.header("**Alison Harper**")    
     col5.image(Image.open('images/Alison-Harper.jpg'), width = 230)
     col5.markdown("**Postdoctoral Research Associate**  \n Study collaborator   \n ""mailto:a.l.harper@exeter.ac.uk")
     
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
- 
