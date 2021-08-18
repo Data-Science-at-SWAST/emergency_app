@@ -11,14 +11,6 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 
 warnings.filterwarnings('ignore')
 
-############################# Function require to download information later on
-
-def download_link(object_to_download):
-    
-    csv = object_to_download.to_csv(index=False)
-    b64 = base64.b64encode(csv.encode()).decode()
-    href = f'<a href="data:file/csv;base64,{b64}">Download csv file</a>'
-
 ############################# Initial set up of sidebar and upload
 
 df = pd.DataFrame()
@@ -277,7 +269,8 @@ if r == True:
                         time.sleep(1)
     
     
-    
+    with st.beta_expander("Raw Forecast Data table (for copying)"):
+        st.table(result)
         
     ############################# beginning of the decomposition section       
     
