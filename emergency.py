@@ -24,7 +24,7 @@ st.sidebar.markdown("Open Source NHS Data Science Library")
 # General page formatting and set-up
 
     
-uploaded_file = st.sidebar.file_uploader("Choose a file",type=('xlsx','csv'))
+uploaded_file = st.sidebar.file_uploader("Choose a file",type=('csv'))
 
 if uploaded_file is not None:
 
