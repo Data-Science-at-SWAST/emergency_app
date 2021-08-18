@@ -51,7 +51,7 @@ st.markdown('The emergency forecast tool is an open source application to predic
     ############################# beginning of the data input section   
     
 if uploaded_file is None:
-    st.warning("Please upload a .csv or .xlsx file to begin forecasting")
+    st.warning("Please upload a .csv file to begin forecasting")
 else:
     st.info("Data loaded! Begin forecasting by clicking Run Forecast Model in the Banner bar")
 
