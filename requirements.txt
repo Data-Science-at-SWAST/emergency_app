@@ -1,4 +1,4 @@
-streamlit==0.81.0
+streamlit
 Pillow
 pandas
 plotly
