@@ -2,19 +2,31 @@ import streamlit as st
 from PIL import Image
 import time
 import pandas as pd
+import base64
 from modules import (ensemble, utility)
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots 
+from plotly.subplots import make_subplots
 import warnings
 from statsmodels.tsa.seasonal import seasonal_decompose
 
 warnings.filterwarnings('ignore')
 
+############################# Function require to download information later on
+
+def download_link(object_to_download, download_filename, download_link_text):
+
+    if isinstance(object_to_download,pd.DataFrame):
+        object_to_download = object_to_download.to_csv(index=False)
+
+    b64 = base64.b64encode(object_to_download.encode()).decode()
+
+    return f'<a href="data:file/txt;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
+
 ############################# Initial set up of sidebar and upload
 
 df = pd.DataFrame()
 
-st.set_page_config(page_title='emergency predict',  layout='wide', initial_sidebar_state='auto', page_icon=':ambulance:') 
+st.set_page_config(page_title='emergency predict',  layout='wide', initial_sidebar_state='auto')
 
 st.image(Image.open('images/emergency logo.png'), width = 400)
 
@@ -23,19 +35,14 @@ st.sidebar.markdown("Open Source NHS Data Science Library")
 # General page formatting and set-up
 
     
-uploaded_file = st.sidebar.file_uploader("Choose a file",type=('csv','xlsx'))
+uploaded_file = st.sidebar.file_uploader("Choose a file",type=('xlsx','csv'))
 
 if uploaded_file is not None:
-    
-    try:
-        df = pd.read_csv(uploaded_file)
-    except:
-        df = pd.read_excel(uploaded_file)
-    
+
+    df = pd.read_csv(uploaded_file)
     if 'ds' not in df:
         st.warning("Please name your target date column ds within your uploaded data to continue")
         st.stop()
-    df['ds'] = pd.to_datetime(df['ds'], format='%d/%m/%Y')
     df = df.set_index('ds')
     
 target = st.sidebar.selectbox('Choose column you would like to forecast',df.select_dtypes(include=['int16', 'int32', 'int64', 'float16', 'float32', 'float64']).columns.tolist(), help = 'The programme will automatically find columns that can be forecasted, just select from this list when you have imported a dataset')
@@ -46,8 +53,6 @@ ram = st.sidebar.selectbox('Choose forecast model',['ensemble','individualised']
 st.sidebar.text(''' ''')
 pi = st.sidebar.selectbox('Pick Prediction Intervals',['90%','80%','60%'], help ='With a 90% prediction interval, the graph will plot an upper and lower line to represent where 90% of the data will fall')
 st.sidebar.text(''' ''')
-decom = st.sidebar.selectbox("Include the Seasonal Decomposition", ['No', 'Yes'], help ='Seasonal Decomposition will break down the dataset into its individual seasonal components, by default this is set to no')
-st.sidebar.text(''' ''')
 crossval = st.sidebar.selectbox("Include the Cross Validation results", ['No', 'Yes'], help ='Cross validation will show you the forecasts performance. However, it can be a lengthly process (typically 2-3 minutes), so if you are already happy with your model you may choose to choose No to avoid running it.')
 st.sidebar.text(''' ''')
 r = st.sidebar.button('Run Forecast Model')
@@ -57,7 +62,7 @@ st.markdown('The emergency forecast tool is an open source application to predic
     ############################# beginning of the data input section   
     
 if uploaded_file is None:
-    st.warning("Please upload a .csv file to begin forecasting")
+    st.warning("Please upload a .csv or .xlsx file to begin forecasting")
 else:
     st.info("Data loaded! Begin forecasting by clicking Run Forecast Model in the Banner bar")
 
@@ -78,7 +83,7 @@ if r == True:
     
 
     ############################# beginning of the data input section   
-    with st.expander("Review input data"):
+    with st.beta_expander("Show Input Data"):
     
         st.markdown('''This is an opportunity to review your input data to ensure that NaN or egregious values do not contaminate your predictions. Clicking on the legend icons will allow you to filter out metrics. There is a date slider along the bottom should you wish to concentrate on a particular date period. Finally, in the top right corner you can choose to enter full screen mode, zoom, download, toggle tooltips and add sparklines. To restart your predictions click on the x symbol on the left hand pane.''')
            
@@ -129,15 +134,42 @@ if r == True:
                 fig.update_layout(
                     height=1000,
                     showlegend=True,
+                    title_text="Time Series Analysis",
                     paper_bgcolor='rgba(34,42,55,1)',
                     title_font_color='rgba(255,255,255,1)',
                     modebar_color='rgba(255,255,255,1)',
                     plot_bgcolor='rgba(47,58,75,0.5)',
-                    margin= dict(l=0,r=10,b=0,t=0),
                     legend_font_color='rgba(255,255,255,1)',
                     colorway=['#E29D89','#46AFF6','#096F64','#3993BA','#02DAC5','#FC5523','#CF6679'],
-                    legend=dict(orientation="h",yanchor="bottom",y=0.47,xanchor="right",x=0.99))
-
+                    xaxis=dict(
+                        rangeselector=dict(
+                            buttons=list([
+                                dict(count=1,
+                                     label="1m",
+                                     step="month",
+                                     stepmode="backward"),
+                                dict(count=6,
+                                     label="6m",
+                                     step="month",
+                                     stepmode="backward"),
+                                dict(count=1,
+                                     label="YTD",
+                                     step="year",
+                                     stepmode="todate"),
+                                dict(count=1,
+                                     label="1y",
+                                     step="year",
+                                     stepmode="backward"),
+                                dict(step="all")
+                            ])
+        
+                        ),
+                        rangeslider=dict(
+                            visible=True
+                        ),
+                        type="date"
+                    )
+                )
                 st.plotly_chart(fig, use_container_width=True)
                 
                 with st.spinner('Data Loading Complete!'):
@@ -148,7 +180,7 @@ if r == True:
         
     with st.spinner('Processing Forecast Model'):    
         
-        with st.expander("Forecast Model"):
+        with st.beta_expander("Forecast Model"):
     
             st.markdown('Our chosen benchmark method, based on performance, is an ensemble (a simple average) of Facebooks Prophet and Regression with ARIMA errors. Both methods are flexible enough to add in special calendar events such as national holidays. In our model we chose to include new years day as this clearly stood out in the time series. In our regression model, we model the error process using the same ARIMA model- (1, 1, 3)(1, 0, 1, 7) - for each sub region. EMS providers in different regions may wish to experiment with alternative error processes.')
             
@@ -205,106 +237,122 @@ if r == True:
                     fig.update_xaxes(color='#F2F2F2', gridcolor = 'rgba(255,255,255,0.2)')
                     fig.update_yaxes(color='#F2F2F2', gridcolor = 'rgba(255,255,255,0.2)')
                     fig.update_layout(
-                    height=1000,
-                    showlegend=True,
-                    paper_bgcolor='rgba(34,42,55,1)',
-                    title_font_color='rgba(255,255,255,1)',
-                    modebar_color='rgba(255,255,255,1)',
-                    plot_bgcolor='rgba(47,58,75,0.5)',
-                    margin= dict(l=0,r=10,b=0,t=0),
-                    legend_font_color='rgba(255,255,255,1)',
-                    colorway=['#E29D89','#46AFF6','#096F64','#3993BA','#02DAC5','#FC5523','#CF6679'],
-                    legend=dict(orientation="h",yanchor="bottom",y=0.47,xanchor="right",x=0.99))
-                     
-                    
+                        height=1000,
+                        showlegend=True,
+                        title_text="Ensemble Forecast Model",
+                        paper_bgcolor='rgba(34,42,55,1)',
+                        title_font_color='rgba(255,255,255,1)',
+                        modebar_color='rgba(255,255,255,1)',
+                        plot_bgcolor='rgba(47,58,75,0.5)',
+                        legend_font_color='rgba(255,255,255,1)',
+                        colorway=['#E29D89','#46AFF6','#096F64','#3993BA','#02DAC5','#FC5523','#CF6679'],
+                        xaxis=dict(
+                            rangeselector=dict(
+                                buttons=list([
+                                    dict(count=1,
+                                         label="1m",
+                                         step="month",
+                                         stepmode="backward"),
+                                    dict(count=6,
+                                         label="6m",
+                                         step="month",
+                                         stepmode="backward"),
+                                    dict(count=1,
+                                         label="YTD",
+                                         step="year",
+                                         stepmode="todate"),
+                                    dict(count=1,
+                                         label="1y",
+                                         step="year",
+                                         stepmode="backward"),
+                                    dict(step="all")
+                                ])
+                            ),
+                            rangeslider=dict(
+                                visible=True
+                            ),
+                            type="date"
+                        )
+                    )
                     st.plotly_chart(fig, use_container_width=True)
+    
+                    if st.button('Save this forecast'):
+                        download_link(df, 'forecastoutput.csv', 'Click here to download data!')
                         
                     with st.spinner('Forecast Model Built!'):
                         time.sleep(1)
     
     
-    with st.expander("Raw Forecast Data table (for copying)"):
-        rfdt, rfdt2 = st.columns((1,4))
-        
-        result = result[result['yhat'].notnull()]
-        result = result[['ds','yhat']]
-        
-        rfdt.table(result.style.hide_index())
+    
         
     ############################# beginning of the decomposition section       
     
     with st.spinner('Processing Decomposition'):    
             
-        with st.expander("View Decomposition"):
+        with st.beta_expander("View Decomposition"):
             st.markdown('Decomposition shows a breakdown of the core components of the forecast model, in this application this is seasonality (a pattern in a time series that repeats in a regular way)i, trend (the growth either positive or negative over time).')
             st.markdown('https://www.oxfordreference.com/view/10.1093/acref/9780199541454.001.0001/acref-9780199541454')
             
             if uploaded_file is not None:
-                
-                
-                    if decom == 'No':
-                        st.markdown("Change Seaonal Decomposition to Yes to see results")
-                    else:
-                                
-                        st.markdown('''Seasonal decomposition aims to break down the individualised components that made up the above forecasts. For more information view the statsmodels seasonal decomposition page.''')
+                st.markdown('''Seasonal decomposition aims to break down the individualised components that made up the above forecasts. For more information view the statsmodels seasonal decomposition page.''')
         
         
-                        sd = df
-                        sd.reset_index(drop = False, inplace = True)
-                        sd['ds'] = pd.to_datetime(sd['ds'])
-                        sd = sd.set_index('ds')
-                        sd.index.freq = 'D'
+                sd = df
+                sd.reset_index(drop = False, inplace = True)
+                sd['ds'] = pd.to_datetime(sd['ds'])
+                sd = sd.set_index('ds')
+                sd.index.freq = 'D'
                 
-                        sdresult = seasonal_decompose(sd[target], model='additive')
-                
-                
-                        it = ['resid','seasonal','trend']
+                sdresult = seasonal_decompose(sd['Responses'], model='additive')
                 
                 
-                        fig = make_subplots(
-                            rows=3, cols=1,
-                            shared_xaxes=True,
-                            vertical_spacing=0.06,
-                            specs=[[{"type": "scatter"}],[{"type": "scatter"}],[{"type": "scatter"}]] #need to enumerate to create the necessary row plots
+                it = ['resid','seasonal','trend']
+                
+                
+                fig = make_subplots(
+                    rows=3, cols=1,
+                    shared_xaxes=True,
+                    vertical_spacing=0.06,
+                    specs=[[{"type": "scatter"}],[{"type": "scatter"}],[{"type": "scatter"}]] #need to enumerate to create the necessary row plots
                       
-                            )
+                )
                 
                 
-                        fig.add_trace(go.Scatter(x=sdresult.resid.index, y=sdresult.resid, mode="lines", name='residual'),row=1, col=1)
-                        fig.add_trace(go.Scatter(x=sdresult.seasonal.index, y=sdresult.seasonal, mode="lines", name='seasonal'),row=2, col=1)
-                        fig.add_trace(go.Scatter(x=sdresult.trend.index, y=sdresult.trend, mode="lines", name='trend'),row=3, col=1) 
+                fig.add_trace(go.Scatter(x=sdresult.resid.index, y=sdresult.resid, mode="lines", name='residual'),row=1, col=1)
+                fig.add_trace(go.Scatter(x=sdresult.seasonal.index, y=sdresult.seasonal, mode="lines", name='seasonal'),row=2, col=1)
+                fig.add_trace(go.Scatter(x=sdresult.trend.index, y=sdresult.trend, mode="lines", name='trend'),row=3, col=1) 
                     
-                        fig.update_xaxes(color='#F2F2F2', gridcolor = 'rgba(255,255,255,0.2)')
-                        fig.update_yaxes(color='#F2F2F2', gridcolor = 'rgba(255,255,255,0.2)')
+                fig.update_xaxes(color='#F2F2F2', gridcolor = 'rgba(255,255,255,0.2)')
+                fig.update_yaxes(color='#F2F2F2', gridcolor = 'rgba(255,255,255,0.2)')
                 
                 
-                        fig.update_layout(
-                            height=1000,
-                            showlegend=True,
-                            paper_bgcolor='rgba(34,42,55,1)',
-                            title_font_color='rgba(255,255,255,1)',
-                            margin= dict(l=0,r=10,b=0,t=0),
-                            modebar_color='rgba(255,255,255,1)',
-                            plot_bgcolor='rgba(47,58,75,0.5)',
-                            legend_font_color='rgba(255,255,255,1)',
-                            colorway=['#E29D89','#46AFF6','#096F64','#3993BA','#02DAC5','#FC5523','#CF6679'],
+                fig.update_layout(
+                    height=1000,
+                    showlegend=True,
+                    title_text="Series Decomposition",
+                    paper_bgcolor='rgba(34,42,55,1)',
+                    title_font_color='rgba(255,255,255,1)',
+                    modebar_color='rgba(255,255,255,1)',
+                    plot_bgcolor='rgba(47,58,75,0.5)',
+                    legend_font_color='rgba(255,255,255,1)',
+                    colorway=['#E29D89','#46AFF6','#096F64','#3993BA','#02DAC5','#FC5523','#CF6679'],
                    
-                            )
-                        st.plotly_chart(fig, use_container_width=True)
+                    )
+                st.plotly_chart(fig, use_container_width=True)
               
-                        with st.spinner('Decomposition Built!'):
-                            time.sleep(1)    
+                with st.spinner('Decomposition Built!'):
+                    time.sleep(1)    
     
     ############################# Beginning of the Cross Validation Section
     
-    with st.expander("Cross Validation"):
+    with st.beta_expander("Cross Validation"):
         st.markdown('A method of assessing the accuracy and validity of a statistical model.  The available data are divided into two parts.  Modelling of the data uses one part only.  The model selected for this part is then used to predict the values in the other part of the data, a valid model should show good predictive accuracy.  In this cross validation the measure is mean absolute error (MAE)i')
         st.markdown('https://www.oxfordreference.com/view/10.1093/acref/9780199541454.001.0001/acref-9780199541454')
         
         if uploaded_file is not None:
             
             if crossval == 'No':
-                st.info("Change Cross Validation to Yes to see results")
+                st.markdown("Change Cross Validation to Yes to see results")
             else:
     
                 with st.spinner("Processing Cross Validation"):
@@ -417,7 +465,6 @@ if r == True:
                             title_font_color='rgba(255,255,255,1)',
                             modebar_color='rgba(255,255,255,1)',
                             plot_bgcolor='rgba(47,58,75,0.5)',
-                            margin= dict(l=0,r=10,b=10,t=30),
                             legend_font_color='rgba(255,255,255,1)',
                             colorway=['#E29D89','#46AFF6','#096F64','#3993BA','#02DAC5','#FC5523','#CF6679'])
                         
@@ -429,7 +476,6 @@ if r == True:
                             paper_bgcolor='rgba(34,42,55,1)',
                             title_font_color='rgba(255,255,255,1)',
                             modebar_color='rgba(255,255,255,1)',
-                            margin= dict(l=0,r=10,b=10,t=30),
                             plot_bgcolor='rgba(47,58,75,0.5)',
                             legend_font_color='rgba(255,255,255,1)',
                             colorway=['#E29D89','#46AFF6','#096F64','#3993BA','#02DAC5','#FC5523','#CF6679'],
@@ -440,11 +486,11 @@ if r == True:
                         with st.spinner('Cross Validation Complete!'):
                             time.sleep(1)  
 
-with st.expander("Forecast Study & Emergency App Development"):
+with st.beta_expander("Forecast Study & Emergency App Development"):
     
     st.markdown("Read the full study here ""https://osf.io/a6nu5")          
     
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4, col5 = st.beta_columns(5)
     
     col1.header("**Andy Mayne**")
     col1.image(Image.open('images/am.jpg'), width = 210)
@@ -459,9 +505,21 @@ with st.expander("Forecast Study & Emergency App Development"):
     col3.markdown("**Senior Modeller**  \n Study collaborator  \n ""mailto:m.allen@exeter.ac.uk")
     
     col4.header("**Lucy Collins**")    
-    col4.image(Image.open('images/Photo.JPG'), width = 230)
+    col4.image(Image.open('images/npic.png'), width = 230)
     col4.markdown("**Capacity Planning Analyst - SWAST**  \n Study collaborator  \n ""mailto:lucy.collins@swast.nhs.uk")
     
     col5.header("**Alison Harper**")    
-    col5.image(Image.open('images/Alison-Harper.jpg'), width = 230)
-    col5.markdown("**Postdoctoral Research Associate**  \n Study collaborator   \n ""mailto:a.l.harper@exeter.ac.uk")
+    col5.image(Image.open('images/npic.png'), width = 230)
+    col5.markdown("  \n Study collaborator  \n ""mailto:a.l.harper@exeter.ac.uk")
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+ 
