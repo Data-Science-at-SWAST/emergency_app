@@ -33,7 +33,7 @@ if uploaded_file is not None:
         df = pd.read_excel(uploaded_file)
     
     if 'ds' not in df or 'dst' not in df:
-        st.warning("Please name your target date column ds within your uploaded data to continue")
+        st.warning("Please name your target date column ds or dst within your uploaded data to continue")
         st.stop()
         
         
@@ -46,6 +46,7 @@ if uploaded_file is not None:
     elif 'dst' in df:
         df['dst'] = pd.to_datetime(df['dst'], format='%d/%m/%Y %H:%M')
         df = df.set_index('dst')
+        df.rename(columns={"dst": "ds")
     
 target = st.sidebar.selectbox('Choose column you would like to forecast',df.select_dtypes(include=['int16', 'int32', 'int64', 'float16', 'float32', 'float64']).columns.tolist(), help = 'The programme will automatically find columns that can be forecasted, just select from this list when you have imported a dataset')
 st.sidebar.text(''' ''')
