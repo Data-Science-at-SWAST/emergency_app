@@ -39,8 +39,9 @@ if uploaded_file is not None:
         
     elif 'dst' in df:
         df['dst'] = pd.to_datetime(df['dst'], format='%d/%m/%Y %H:%M')
-        df = df.set_index('dst')
+
         df = df.rename(columns={"dst": "ds"})    
+        df = df.set_index('ds')
     
     else: 
         st.warning("Please name your target date column ds or dst within your uploaded data to continue")
