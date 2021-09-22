@@ -32,12 +32,10 @@ if uploaded_file is not None:
     except:
         df = pd.read_excel(uploaded_file)
     
-    if 'ds' not in df or 'dst' not in df:
+    if not {'ds', 'dst'}.issubset(df.columns):
         st.warning("Please name your target date column ds or dst within your uploaded data to continue")
         st.stop()
-        
-        
-        
+             
     elif 'ds' in df:
        
         df['ds'] = pd.to_datetime(df['ds'], format='%d/%m/%Y')
