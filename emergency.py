@@ -163,7 +163,7 @@ if r == True:
     
                     fcstdf = df
     
-                    fcstdf.index.freq = 'D'
+                    #fcstdf.index.freq = 'D'
                     model = utility.default_ensemble()
                     model.fit(fcstdf[target])
                     forecast_frame = model.predict(horizon=hori, return_all_models = ram, alpha = pi)          
