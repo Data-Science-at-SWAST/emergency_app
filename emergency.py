@@ -35,7 +35,7 @@ if uploaded_file is not None:
     if 'ds' not in df:
         st.warning("Please name your target date column ds within your uploaded data to continue")
         st.stop()
-    df['ds'] = pd.to_datetime(df['ds'], format='%d/%m/%Y %H:%M')
+    df['ds'] = pd.to_datetime(df['ds'], format='%d/%m/%Y')
     df = df.set_index('ds')
     
 target = st.sidebar.selectbox('Choose column you would like to forecast',df.select_dtypes(include=['int16', 'int32', 'int64', 'float16', 'float32', 'float64']).columns.tolist(), help = 'The programme will automatically find columns that can be forecasted, just select from this list when you have imported a dataset')
