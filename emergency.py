@@ -23,7 +23,7 @@ if uploaded_file is None:
     st.sidebar.error("Please upload either a csv or xlsx file")
     
 
-if uploaded_file is not None:
+else:
 
     file_ext = uploaded_file.name.split(".")[1] # file extension i.e .csv
        
@@ -41,19 +41,28 @@ if uploaded_file is not None:
     
     target = st.sidebar.selectbox('Choose column you would like to forecast',df.select_dtypes(include=['int16', 'int32', 'int64', 'float16', 'float32', 'float64']).columns.tolist(), help = 'The programme will automatically find columns that can be forecasted, just select from this list when you have imported a dataset')
         
-    tp = st.sidebar.selectbox(label='Choose Time interval', options = ['Hours', 'Days','Week', 'Month', 'Year'], index = 1)
+    #tp = st.sidebar.selectbox(label='Choose Time interval', options = ['Hours', 'Days','Week', 'Month', 'Year'], index = 1)
+    # This doesnt seem to make any difference when changing the options
         
     hori = st.sidebar.number_input("Choose the forecast horizon",value = 54, min_value = 1,  help = 'The horizon refers to how many units you want to forecast, i.e. if you want to forecast 7 days this number would be 7')
 
     df = df.rename(columns={target_ds:'ds'})
     
+    #for excel date
     try:
         df['ds'] = pd.to_datetime(df['ds'], format = '%d/%m/%Y')
-         
-    except:
+        df.sort_values(by='ds',inplace = True) # sorting values oldest - newest i.e. ascending=True (im not 100% sure on this)
+    except ValueError:
         pass
+         
+    # for excel time
+    try:
+        df['ds'] = pd.to_datetime(df['ds'], format = '%H:%M:%S')
+        df.sort_values(by='ds', inplace = True) 
+    except ValueError:
+        pass
+    # This is the only way i could get hours to work, not sure how good this is, but at least it works.    
     
-
     st.sidebar.info('Ready to forecast? Click below to execute model')
 
     r = st.sidebar.button('Upload Data & Parameters')   
@@ -63,14 +72,19 @@ if uploaded_file is not None:
         
 
         with st.spinner('Processing forecast model'):
-        
+            
             df = df.set_index('ds') # this needs to be ordered!!!!!!!!!!!!! A-Z
     
             df2 = df.select_dtypes(include=['int16','int32','int64','float16','float32','float64'])
             
             st.markdown('**Training data**')
             
-            st.line_chart(df2,)   
+            
+            #st.line_chart(df2,)
+            st.line_chart(df2[target]) # I found if looking at mulitple columns with large variation
+            # it can be hard without zooming in a lot to see your target variable, to compare with 
+            # forecast etc..
+            
         
             model = utility.default_ensemble()
         
@@ -133,3 +147,4 @@ with st.expander('More information'):
     col5.header("**Alison Harper**")    
     col5.image(Image.open('images/Alison-Harper.jpg'), width = 230)
     col5.markdown("**Postdoctoral Research Associate**  \n Study collaborator   \n ""mailto:a.l.harper@exeter.ac.uk")
+    
