@@ -6,3 +6,4 @@ statsmodels
 fbprophet
 pystan==2.19.1.1
 forecast_tools
+openpyxl
